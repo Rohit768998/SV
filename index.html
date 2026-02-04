@@ -92,24 +92,39 @@
             100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
         }
 
-        /* Main Story Container */
+        /* Main Story Container - ADDED SCROLL LOGIC HERE */
         .story-card {
             background: rgba(255, 255, 255, 0.9);
             width: 90%;
             max-width: 500px;
             min-height: 60vh;
+            
+            /* --- NEW SCROLL SETTINGS --- */
+            max-height: 85vh; /* Prevents it from going off-screen on mobile */
+            overflow-y: auto; /* Adds scrollbar only if needed */
+            /* --------------------------- */
+
             padding: 40px 20px;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(108, 92, 231, 0.3);
             z-index: 10;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* Changed to start so scrolling works better */
             align-items: center;
             position: relative;
             transition: all 0.5s ease;
         }
         
+        /* Custom Scrollbar Styling (Optional but looks nice) */
+        .story-card::-webkit-scrollbar {
+            width: 5px;
+        }
+        .story-card::-webkit-scrollbar-thumb {
+            background: #ccc; 
+            border-radius: 10px;
+        }
+
         body.night-mode .story-card {
             box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
         }
@@ -119,6 +134,7 @@
             display: none;
             animation: fadeIn 0.8s ease;
             width: 100%;
+            padding-top: 10px; /* Slight padding for top alignment */
         }
 
         .slide.active {
@@ -299,6 +315,20 @@
             border-radius: 10px;
         }
 
+        /* Centered To-Do List */
+        .todo-box {
+            background: rgba(10, 9, 9, 0.15); 
+            border: 1px solid rgba(22, 19, 19, 0.3); 
+            padding: 20px; 
+            border-radius: 15px; 
+            margin: 15px auto; 
+            text-align: left; 
+            display: inline-block; 
+            color: white; 
+            backdrop-filter: blur(5px); 
+            width: 85%;
+        }
+
     </style>
 </head>
 <body onload="initStory()">
@@ -318,16 +348,18 @@
 
     <div class="heart-bg" id="heartContainer"></div>
 
-    <div class="story-card">
+    <div class="story-card" id="mainCard">
         <div class="progress-container">
             <div class="progress-bar" id="progressBar"></div>
         </div>
 
         <div class="slide active" id="slide1">
-            <h1>Hey Sneha...</h1>
-            <p>I wanted to tell you a story. A story about a <span class="highlight">Fluffmuscle</span> and a <span class="highlight">Perksofbeingbitch</span>.</p>
-            <p>Ready? 💜</p>
-            <button class="btn" onclick="startStory()">Start the Story</button>
+            <div style="margin-top: 20px;"> 
+                <h1>Hey Sneha...</h1>
+                <p>I wanted to tell you a story. A story about a <span class="highlight">Fluffmuscle</span> and a <span class="highlight">Perksofbeingbitch</span>.</p>
+                <p>Ready? 💜</p>
+                <button class="btn" onclick="startStory()">Start the Story</button>
+            </div>
         </div>
 
         <div class="slide" id="slide2">
@@ -421,7 +453,7 @@
             <p>Yeah, it’s gonna kill us. I miss you a lot.</p>
             <p><b>I hope we get together and these 1695 nights end fast.</b></p>
             
-            <div style="background: rgba(10, 9, 9, 0.15); border: 1px solid rgba(22, 19, 19, 0.3); padding: 20px; border-radius: 15px; margin: 15px 0; text-align: left; display: inline-block; color: white; backdrop-filter: blur(5px); width: 85%;">
+            <div class="todo-box">
                 <h3 style="margin-top:0; font-size:1.1rem; border-bottom: 1px solid rgba(24, 20, 20, 0.3); padding-bottom: 10px; margin-bottom: 10px; font-family: 'Nunito', sans-serif;">To-Do List When We Meet 📝:</h3>
                 
                 <label style="display:block; cursor:pointer; margin: 8px 0; font-size: 0.95rem;">
@@ -473,6 +505,7 @@
             <div id="loveCounter"></div>
 
             <br>
+            <p>Happy Valentine's Day, love.</p>
             <br><br>
         </div>
 
@@ -481,14 +514,11 @@
     <script>
         /* --- JAVASCRIPT LOGIC --- */
 
-        // 0. Initialize: Ensure slide 1 has the image background on load
         function initStory() {
             const card = document.querySelector('.story-card');
-            // Ensure 'sneha.png' is in the folder
             card.style.background = "linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)), url('sneha.png') no-repeat center/cover";
         }
 
-        // 1. Floating Hearts Animation
         function createHeart() {
             const heart = document.createElement('div');
             heart.classList.add('heart');
@@ -496,51 +526,43 @@
             heart.style.left = Math.random() * 100 + 'vw';
             heart.style.animationDuration = Math.random() * 3 + 7 + 's';
             document.getElementById('heartContainer').appendChild(heart);
-            
-            setTimeout(() => {
-                heart.remove();
-            }, 10000);
+            setTimeout(() => { heart.remove(); }, 10000);
         }
         setInterval(createHeart, 300);
 
-        // 2. Start Story + Play Music
         function startStory() {
             var music = document.getElementById("bgMusic");
             music.volume = 0.5; 
-            music.play().catch(error => {
-                console.log("Autoplay was prevented by browser. User interaction needed.");
-            });
+            music.play().catch(error => { console.log("Autoplay was prevented by browser."); });
             nextSlide(2);
         }
 
-        // 3. Slide Navigation & Day/Night Transition
         function nextSlide(slideNumber) {
             const slides = document.querySelectorAll('.slide');
             const card = document.querySelector('.story-card');
             
+            // RESET SCROLL TO TOP WHEN SLIDE CHANGES
+            card.scrollTop = 0;
+
             slides.forEach(slide => slide.classList.remove('active'));
             document.getElementById('slide' + slideNumber).classList.add('active');
 
-            // --- BACKGROUND IMAGE LOGIC ---
             if (slideNumber === 1) {
                 card.style.background = "linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)), url('sneha.png') no-repeat center/cover";
             } else {
                 card.style.background = "rgba(255, 255, 255, 0.9)";
             }
 
-            // --- DAY -> NIGHT TRANSITION LOGIC ---
             if (slideNumber >= 9) {
                 document.body.classList.add('night-mode');
             } else {
                 document.body.classList.remove('night-mode');
             }
 
-            // Progress Bar Update
             const progress = (slideNumber / 11) * 100;
             document.getElementById('progressBar').style.width = progress + '%';
         }
 
-        // 4. Lightbox Functions
         function openLightbox(imageSrc) {
             const lightbox = document.getElementById('lightbox');
             const lightboxImg = document.getElementById('lightbox-img');
@@ -552,23 +574,17 @@
             document.getElementById('lightbox').style.display = 'none';
         }
 
-        // 5. The "No" Button Trick
         function moveNoButton() {
             const btn = document.getElementById('noBtn');
             const x = Math.random() * (window.innerWidth - 200);
             const y = Math.random() * (window.innerHeight - 200);
-            
             btn.style.position = 'absolute';
             btn.style.left = Math.random() * 80 + '%';
             btn.style.top = Math.random() * 80 + '%';
         }
 
-        // 6. She Said Yes - Confetti & Vibrate!
         function sheSaidYes() {
-            // Vibrate for 200ms (works on some mobiles)
-            if (navigator.vibrate) {
-                navigator.vibrate([200, 100, 200]);
-            }
+            if (navigator.vibrate) { navigator.vibrate([200, 100, 200]); }
             nextSlide(11);
             launchConfetti();
         }
@@ -578,45 +594,33 @@
             var animationEnd = Date.now() + duration;
             var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 999 };
 
-            function randomInRange(min, max) {
-                return Math.random() * (max - min) + min;
-            }
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; }
 
             var interval = setInterval(function() {
                 var timeLeft = animationEnd - Date.now();
-
-                if (timeLeft <= 0) {
-                    return clearInterval(interval);
-                }
-
+                if (timeLeft <= 0) { return clearInterval(interval); }
                 var particleCount = 50 * (timeLeft / duration);
                 confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
                 confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
             }, 250);
         }
 
-        // 7. Love Counter (Counts from Jan 17, 2026)
         const startDate = new Date(2026, 0, 17, 0, 0); 
         
         function updateCounter() {
             const now = new Date();
             const diff = now - startDate;
-            
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
             const minutes = Math.floor((diff / 1000 / 60) % 60);
             const seconds = Math.floor((diff / 1000) % 60);
-            
-            document.getElementById("loveCounter").innerText = 
-                `Being yours for: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+            document.getElementById("loveCounter").innerText = `Being yours for: ${days}d ${hours}h ${minutes}m ${seconds}s`;
         }
         setInterval(updateCounter, 1000);
 
-        // 8. Panic Mode (Brother Alert)
         function panicMode() {
             var music = document.getElementById("bgMusic");
             music.pause();
-            
             document.body.innerHTML = `
                 <div style="text-align:left; padding:40px; color: black; font-family: 'Times New Roman', serif; background:white; height:100vh;">
                     <h1 style="border-bottom: 1px solid #ccc;">Linear Algebra: Vector Spaces</h1>
